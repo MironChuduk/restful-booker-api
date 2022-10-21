@@ -59,6 +59,12 @@ public class ApiService {
                 .extract().body().jsonPath().getObject(".", BookingData.class);
     }
 
+    public String getFirstNameFromBookingById(Response response) {
+        return response
+                .then()
+                .extract().body().jsonPath().getObject("firstname", String.class);
+    }
+
     public BookingData getPostedBooking(Response response) {
         return response
                 .then()
@@ -75,5 +81,11 @@ public class ApiService {
         return response
                 .then()
                 .extract().body().jsonPath().getObject(".", BookingData.class);
+    }
+
+    public String getFirstNameFromUpdatedBooking(Response response) {
+        return response
+                .then()
+                .extract().body().jsonPath().getObject("firstname", String.class);
     }
 }

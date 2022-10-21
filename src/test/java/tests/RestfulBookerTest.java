@@ -21,11 +21,12 @@ public class RestfulBookerTest {
 
         BookingData expectedBookingData = BookingData.getBookingFromProperties("expectedBooking3595");
 
-        String validId = "3595";
+        String validId = "35";
         response = apiService.getRequest("https://restful-booker.herokuapp.com/booking/" + validId);
         Assert.assertEquals(apiService.getStatusCode(response), 200);
         BookingData bookingData = apiService.getBookingById(response);
         Assert.assertTrue(bookingData.equals(expectedBookingData));
+        Assert.assertEquals(apiService.getFirstNameFromBookingById(response), "Sally");
 
         String defunctId = "1";
         response = apiService.getRequest("https://restful-booker.herokuapp.com/booking/" + defunctId);
@@ -49,11 +50,11 @@ public class RestfulBookerTest {
         Assert.assertTrue(requestPostBooking.equals(responseBooking));
 
         createdBookingId = apiService.getPostedBookingId(response);
-
         response = apiService
                 .putRequest("https://restful-booker.herokuapp.com/booking/" + createdBookingId, requestPutBooking);
         Assert.assertEquals(response.statusCode(), 200);
         responseBooking = apiService.getUpdatedBooking(response);
+        Assert.assertEquals(apiService.getFirstNameFromUpdatedBooking(response), "Alex");
         response = apiService.getRequest("https://restful-booker.herokuapp.com/booking/" + createdBookingId);
         BookingData expectedBooking = apiService.getBookingById(response);
         Assert.assertTrue(responseBooking.equals(expectedBooking));
