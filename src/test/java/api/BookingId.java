@@ -8,7 +8,6 @@ public class BookingId {
     }
 
     public BookingId() {
-
     }
 
     public Integer getBookingid() {

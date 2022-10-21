@@ -1,122 +1,67 @@
 package tests;
 
 import api.*;
-import io.restassured.http.ContentType;
+import io.restassured.response.Response;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+import services.ApiService;
 
 import java.util.List;
 
-import static io.restassured.RestAssured.given;
-
 public class RestfulBookerTest {
 
+    ApiService apiService = new ApiService();
+    Response response;
+
     @Test
-    public void checkApiResponse() {
-        List<BookingId> books = given()
-                .when()
-                .contentType(ContentType.JSON)
-                .get("https://restful-booker.herokuapp.com/booking")
-                .then()
-                .extract().body().jsonPath().getList(".", BookingId.class);
-        System.out.println(books);
+    public void getRequestTest() {
+        response = apiService.getRequest("https://restful-booker.herokuapp.com/booking");
+        Assert.assertEquals(apiService.getStatusCode(response), 200);
+        List<BookingId> bookingIdList = apiService.getBookingIds(response);
+
+        BookingData expectedBookingData = BookingData.getBookingFromProperties("expectedBooking3595");
+
+        String validId = "3595";
+        response = apiService.getRequest("https://restful-booker.herokuapp.com/booking/" + validId);
+        Assert.assertEquals(apiService.getStatusCode(response), 200);
+        BookingData bookingData = apiService.getBookingById(response);
+        Assert.assertTrue(bookingData.equals(expectedBookingData));
+
+        String defunctId = "1";
+        response = apiService.getRequest("https://restful-booker.herokuapp.com/booking/" + defunctId);
+        Assert.assertEquals(apiService.getStatusCode(response), 404);
+
+        String invalidId = "-12qw";
+        response = apiService.getRequest("https://restful-booker.herokuapp.com/booking/" + invalidId);
+        Assert.assertEquals(apiService.getStatusCode(response), 404);
     }
 
     @Test
-    public void checkBookById() {
-        BookingData bookingData = given()
-                .when()
-                .contentType(ContentType.JSON)
-                .get("https://restful-booker.herokuapp.com/booking/3595")
-                .then()
-                .extract().body().jsonPath().getObject(".", BookingData.class);
-    }
+    public void crudOperationTest() {
+        BookingData requestPostBooking = BookingData.getBookingFromProperties("requestPostBooking");
+        BookingData requestPutBooking = BookingData.getBookingFromProperties("requestPutBooking");
 
-    @Test
-    public void checkAuth() {
-        User user = new User();
-        Token token = user.createToken("admin", "password123");
-        System.out.println(token.getToken());
-    }
+        Integer createdBookingId;
 
-    @Test
-    public void successBooking() {
-        RequestedBookingData.Bookingdates bookingdates = new RequestedBookingData
-                .Bookingdates("2018-01-01", "2019-01-01");
-        RequestedBookingData requestRequestedBookingData = new RequestedBookingData.BookingDataBuilder()
-                .setFirstname("Miron")
-                .setLastname("Chuduk")
-                .setTotalprice(191)
-                .setDepositpaid(true)
-                .setBookingdates(bookingdates)
-                .setAdditionalneeds("Breakfast")
-                .build();
-        System.out.println(requestRequestedBookingData);
-        Integer num = given()
-                .contentType(ContentType.JSON)
-                .body(requestRequestedBookingData)
-                .when()
-                .post("https://restful-booker.herokuapp.com/booking")
-                .then()
-                .extract().body().jsonPath().getObject("bookingid", Integer.class);
-        BookingData createdRequestedBookingData = given()
-                .when()
-                .contentType(ContentType.JSON)
-                .get("https://restful-booker.herokuapp.com/booking/" + num)
-                .then()
-                .extract().body().jsonPath().getObject(".", BookingData.class);
-        System.out.println(createdRequestedBookingData);
-    }
+        response = apiService.postRequest("https://restful-booker.herokuapp.com/booking", requestPostBooking);
+        Assert.assertEquals(response.statusCode(), 200);
+        BookingData responseBooking = apiService.getPostedBooking(response);
+        Assert.assertTrue(requestPostBooking.equals(responseBooking));
 
-    @Test
-    public void updateBooking() {
-        RequestedBookingData.Bookingdates bookingdates = new RequestedBookingData
-                .Bookingdates("2018-01-01", "2019-01-01");
-        RequestedBookingData requestRequestedBookingData = new RequestedBookingData.BookingDataBuilder()
-                .setFirstname("Alex")
-                .setLastname("Green")
-                .setTotalprice(124)
-                .setDepositpaid(true)
-                .setBookingdates(bookingdates)
-                .setAdditionalneeds("Breakfast")
-                .build();
-        System.out.println(requestRequestedBookingData);
-        BookingData bookingData = given()
-                .header("Accept", "application/json")
-                .header("Content-Type", "application/json")
-                .auth().preemptive().basic("admin", "password123")
-                .contentType(ContentType.JSON)
-                .body(requestRequestedBookingData)
-                .when()
-                .put("https://restful-booker.herokuapp.com/booking/121")
-                .then()
-                .contentType(ContentType.JSON)
-                .extract().body().jsonPath().getObject(".", BookingData.class);
-        System.out.println(bookingData);
-    }
+        createdBookingId = apiService.getPostedBookingId(response);
 
-    @Test
-    public void partialUpdateBooking() {
-        BookingData bookingData = given()
-                .header("Accept", "application/json")
-                .header("Content-Type", "application/json")
-                .auth().preemptive().basic("admin", "password123")
-                .body("{\"firstname\" : \"James\", \"lastname\" : \"Brown\"}")
-                .when()
-                .patch("https://restful-booker.herokuapp.com/booking/121")
-                .then()
-                .contentType(ContentType.JSON)
-                .extract().body().jsonPath().getObject(".", BookingData.class);
-        System.out.println(bookingData);
-    }
+        response = apiService
+                .putRequest("https://restful-booker.herokuapp.com/booking/" + createdBookingId, requestPutBooking);
+        Assert.assertEquals(response.statusCode(), 200);
+        responseBooking = apiService.getUpdatedBooking(response);
+        response = apiService.getRequest("https://restful-booker.herokuapp.com/booking/" + createdBookingId);
+        BookingData expectedBooking = apiService.getBookingById(response);
+        Assert.assertTrue(responseBooking.equals(expectedBooking));
 
-    @Test
-    public void deleteBooking() {
-        int responseStatusCode = given()
-                .header("Content-Type", "application/json")
-                .auth().preemptive().basic("admin", "password123")
-                .delete("https://restful-booker.herokuapp.com/booking/123")
-                .statusCode();
-        Assert.assertEquals(responseStatusCode, 201);
+        response = apiService.deleteRequest("https://restful-booker.herokuapp.com/booking/" + createdBookingId);
+        Assert.assertEquals(response.statusCode(), 201);
+
+        response = apiService.getRequest("https://restful-booker.herokuapp.com/booking/" + createdBookingId);
+        Assert.assertEquals(response.statusCode(), 404);
     }
 }
