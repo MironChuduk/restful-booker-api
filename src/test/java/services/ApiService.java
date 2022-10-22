@@ -1,7 +1,6 @@
 package services;
 
 import api.BookingData;
-import api.BookingId;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 
@@ -47,22 +46,22 @@ public class ApiService {
                 .put(url);
     }
 
-    public List<BookingId> getBookingIds(Response response) {
+    public List<Integer> getBookingIds(Response response) {
         return response
                 .then()
-                .extract().body().jsonPath().getList(".", BookingId.class);
+                .extract().body().jsonPath().getList("bookingid", Integer.class);
+    }
+
+    public String getBookingField(Response response, String fieldName) {
+        return response
+                .then()
+                .extract().body().jsonPath().getObject(fieldName, String.class);
     }
 
     public BookingData getBookingById(Response response) {
         return response
                 .then()
                 .extract().body().jsonPath().getObject(".", BookingData.class);
-    }
-
-    public String getFirstNameFromBookingById(Response response) {
-        return response
-                .then()
-                .extract().body().jsonPath().getObject("firstname", String.class);
     }
 
     public BookingData getPostedBooking(Response response) {
@@ -81,11 +80,5 @@ public class ApiService {
         return response
                 .then()
                 .extract().body().jsonPath().getObject(".", BookingData.class);
-    }
-
-    public String getFirstNameFromUpdatedBooking(Response response) {
-        return response
-                .then()
-                .extract().body().jsonPath().getObject("firstname", String.class);
     }
 }

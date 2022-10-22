@@ -17,16 +17,17 @@ public class RestfulBookerTest {
     public void getRequestTest() {
         response = apiService.getRequest("https://restful-booker.herokuapp.com/booking");
         Assert.assertEquals(apiService.getStatusCode(response), 200);
-        List<BookingId> bookingIdList = apiService.getBookingIds(response);
+        List<Integer> bookingIdList = apiService.getBookingIds(response);
+        System.out.println(bookingIdList.get(0));
 
-        BookingData expectedBookingData = BookingData.getBookingFromProperties("expectedBooking3595");
+        BookingData expectedBookingData = BookingData.getBookingFromProperties("expectedBooking354");
 
-        String validId = "35";
+        String validId = "354";
         response = apiService.getRequest("https://restful-booker.herokuapp.com/booking/" + validId);
         Assert.assertEquals(apiService.getStatusCode(response), 200);
         BookingData bookingData = apiService.getBookingById(response);
         Assert.assertTrue(bookingData.equals(expectedBookingData));
-        Assert.assertEquals(apiService.getFirstNameFromBookingById(response), "Sally");
+        Assert.assertEquals(apiService.getBookingField(response, "firstname"), "Howard");
 
         String defunctId = "1";
         response = apiService.getRequest("https://restful-booker.herokuapp.com/booking/" + defunctId);
@@ -54,7 +55,7 @@ public class RestfulBookerTest {
                 .putRequest("https://restful-booker.herokuapp.com/booking/" + createdBookingId, requestPutBooking);
         Assert.assertEquals(response.statusCode(), 200);
         responseBooking = apiService.getUpdatedBooking(response);
-        Assert.assertEquals(apiService.getFirstNameFromUpdatedBooking(response), "Alex");
+        Assert.assertEquals(apiService.getBookingField(response, "firstname"), "Alex");
         response = apiService.getRequest("https://restful-booker.herokuapp.com/booking/" + createdBookingId);
         BookingData expectedBooking = apiService.getBookingById(response);
         Assert.assertTrue(responseBooking.equals(expectedBooking));
